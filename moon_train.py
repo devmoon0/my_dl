@@ -82,19 +82,22 @@ def _load_model(m, _include_top_=False, classes=3):
         base_model = tf.keras.applications.mobilenet_v2.MobileNetV2(
         input_shape=IMG_SHAPE, alpha=1.0, include_top=_include_top_, weights='imagenet', pooling=None)
     elif m =='RN':
+        weight='imagenet'
+        if classes !=1000:
+            weight=None
         base_model= tf.keras.applications.ResNet50(include_top=_include_top_,
                         input_shape=IMG_SHAPE,
-                        pooling='avg',classes=5,
-                        weights='imagenet')
+                        pooling='avg',classes=classes,
+                        weights=weight)
     elif m == 'VG':
         base_model = VGG16(include_top=_include_top_,
                         input_shape=IMG_SHAPE,
-                        pooling='avg',classes=5,
+                        pooling='avg',classes=classes,
                         weights='imagenet')
     elif m == 'IC':
         base_model = InceptionV3(include_top=_include_top_,
                         input_shape=IMG_SHAPE,
-                        pooling='avg',classes=5,
+                        pooling='avg',classes=classes,
                         weights='imagenet')
     for layer in base_model.layers[:-1]:
         layer.trainable = False
@@ -105,10 +108,10 @@ def _load_model(m, _include_top_=False, classes=3):
     top_model = Dropout(0.3)(top_model)
     top_model = Dense(1024, activation='relu')(top_model)
     top_model = Dropout(0.3)(top_model)
-    top_model = Dense(classes, activation='softmax')(top_model) ##TODO: 라벨갯수로 변경
+    top_model = Dense(classes, activation='softmax')(top_model)
 
     model = Model(base_model.input, top_model, name='Altered_myModel')
-    model.summary()
+    # model.summary()
     plot_model(model, to_file='model.png')
     return model
 
@@ -268,7 +271,7 @@ if __name__ ==  '__main__':
     print(">> train test shape = {} {}".format(x_train.shape, y_train.shape))
 
     print(">> Start Model")
-    model = _load_model('VG')
+    model = _load_model('VG', True)
     adam = tf.keras.optimizers.Adam(learning_rate=0.001)
     sgd = tf.keras.optimizers.SGD(learning_rate=0.001)
     rlrop = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',mode='max',factor=0.5, patience=10, min_lr=0.001, verbose=1)
